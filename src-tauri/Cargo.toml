@@ -1,0 +1,21 @@
+[package]
+name = "fuzion-music"
+version = "1.0.0"
+description = "wompwomp"
+authors = ["you"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[dependencies]
+tauri = { version = "1", features = [ "fs-create-dir", "fs-exists", "path-all", "fs-write-file", "fs-read-file", "protocol-asset", "shell-open"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusty_ytdl = "0.7.3"
+reqwest = { version = "0.11", features = ["rustls-tls"] }
+hyper-rustls = "0.22.0"
+
+[features]
+# This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
