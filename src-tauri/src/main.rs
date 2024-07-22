@@ -64,13 +64,19 @@ async fn youtube_download(
     return Ok(());
   }
 
+  println!("Downloading video: {} to {}", video_info.title, path.display());
+
   video.download(&path).await.map_err(|err| err.to_string())?;
+
+  println!("Downloaded video: {} to {}", video_info.title, path.display());
 
   let thumbnail_path = app
     .path_resolver()
     .app_local_data_dir()
     .unwrap()
     .join(format!("{}.png", video.get_video_id()));
+
+  println!("Downloading thumbnail: {} to {}", video_info.thumbnails[0].url, thumbnail_path.display());
 
   let res = reqwest::get(&video_info.thumbnails[0].url)
     .await
@@ -83,6 +89,8 @@ async fn youtube_download(
   thumbnail_file
     .write_all(&content)
     .map_err(|err| err.to_string())?;
+
+  println!("Downloaded thumbnail: {} to {}", video_info.thumbnails[0].url, thumbnail_path.display());
 
   let songs_path = app
     .path_resolver()
