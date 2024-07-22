@@ -24,6 +24,13 @@ import { Toggle } from "~/components/ui/toggle"
 import { useTransitions } from "~/lib/transitions"
 import { fs } from "@tauri-apps/api"
 import { useSongs } from "~/lib/songs"
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "~/components/ui/context-menu"
 
 type SavedConfig = Omit<StoreType, "playing"> & {
   playing: string
@@ -120,16 +127,6 @@ export const Playing: FC = () => {
   useEffect(() => {
     if (!audio.current) return
 
-    if (paused) {
-      void audio.current.pause()
-    } else {
-      void audio.current.play()
-    }
-  }, [paused])
-
-  useEffect(() => {
-    if (!audio.current) return
-
     if (!playing) return
 
     audio.current!.src = tauri.convertFileSrc(playing.file)
@@ -147,8 +144,8 @@ export const Playing: FC = () => {
   useEffect(() => {
     if (!audio.current) return
 
-    audio.current.volume = (volume / 100) * 0.1
-  }, [store.state.volume])
+    audio.current.volume = volume / 1000
+  }, [volume])
 
   useEffect(() => {
     transitions.disable()
@@ -226,7 +223,33 @@ export const Playing: FC = () => {
 
   return (
     <>
-      <audio onEnded={handleEnded} onTimeUpdate={handleTimeUpdate} ref={audio} />
+      <audio
+        onPause={() => store.setState((state) => ({ ...state, paused: true }))}
+        onPlay={() => store.setState((state) => ({ ...state, paused: false }))}
+        onEnded={handleEnded}
+        onTimeUpdate={handleTimeUpdate}
+        onVolumeChange={(e) => {
+          if (e.currentTarget.volume < 0) {
+            e.currentTarget.volume = 0
+            store.setState((state) => ({
+              ...state,
+              volume: 0,
+            }))
+          } else if (e.currentTarget.volume > 0.1) {
+            e.currentTarget.volume = 0.1
+            store.setState((state) => ({
+              ...state,
+              volume: 100,
+            }))
+          } else if (e.currentTarget.volume * 1000 !== volume) {
+            store.setState((state) => ({
+              ...state,
+              volume: e.currentTarget.volume * 1000,
+            }))
+          }
+        }}
+        ref={audio}
+      />
       <div className="size-full grid grid-cols-[1fr,2fr,1fr]">
         <div className="size-full relative flex items-center">
           <Gradient url={tauri.convertFileSrc(playing.thumbnail)} />
@@ -311,30 +334,75 @@ export const Playing: FC = () => {
             >
               <TrackNextIcon className="size-4" />
             </Button>
-            <Toggle
-              className="relative"
-              size="icon"
-              onPressedChange={() =>
-                store.setState((state) => ({
-                  ...state,
-                  loop:
-                    loop === "none" ? "one" : loop === "one" ? "all" : "none",
-                }))
-              }
-              pressed={loop === "one" || loop === "all"}
-            >
-              <LoopIcon className="size-4 opacity-50 relative" />
-              {loop === "one" && (
-                <div className="absolute flex justify-center items-center -top-1.5 -right-1.5 size-5 text-[0.65rem] leading-[0.6rem] text-center bg-primary text-primary-foreground rounded-lg">
-                  1
-                </div>
-              )}
-              {loop === "all" && (
-                <div className="absolute flex justify-center items-center -top-1.5 -right-1.5 size-5 text-[0.65rem] leading-[0.6rem] text-center bg-primary text-primary-foreground rounded-lg">
-                  ∞
-                </div>
-              )}
-            </Toggle>
+            <ContextMenu modal={false}>
+              <ContextMenuTrigger asChild>
+                <Toggle
+                  className="relative"
+                  size="icon"
+                  onPressedChange={() =>
+                    store.setState((state) => ({
+                      ...state,
+                      loop:
+                        loop === "none"
+                          ? "one"
+                          : loop === "one"
+                          ? "all"
+                          : "none",
+                    }))
+                  }
+                  pressed={loop === "one" || loop === "all"}
+                >
+                  <LoopIcon className="size-4 opacity-50 relative" />
+                  {loop === "one" && (
+                    <div className="absolute flex justify-center items-center -top-1.5 -right-1.5 size-5 text-[0.65rem] leading-[0.6rem] text-center bg-primary text-primary-foreground rounded-lg">
+                      1
+                    </div>
+                  )}
+                  {loop === "all" && (
+                    <div className="absolute flex justify-center items-center -top-1.5 -right-1.5 size-5 text-[0.65rem] leading-[0.6rem] text-center bg-primary text-primary-foreground rounded-lg">
+                      ∞
+                    </div>
+                  )}
+                </Toggle>
+              </ContextMenuTrigger>
+              <ContextMenuContent loop className="max-w-64">
+                <ContextMenuCheckboxItem
+                  checked={loop === "none"}
+                  onCheckedChange={() =>
+                    store.setState((state) => ({
+                      ...state,
+                      loop: "none",
+                    }))
+                  }
+                >
+                  Repeat none
+                </ContextMenuCheckboxItem>
+                <ContextMenuSeparator />
+                <ContextMenuCheckboxItem
+                  checked={loop === "one"}
+                  onCheckedChange={() =>
+                    store.setState((state) => ({
+                      ...state,
+                      loop: "one",
+                    }))
+                  }
+                >
+                  Repeat one
+                </ContextMenuCheckboxItem>
+                <ContextMenuSeparator />
+                <ContextMenuCheckboxItem
+                  checked={loop === "all"}
+                  onCheckedChange={() =>
+                    store.setState((state) => ({
+                      ...state,
+                      loop: "all",
+                    }))
+                  }
+                >
+                  Repeat all
+                </ContextMenuCheckboxItem>
+              </ContextMenuContent>
+            </ContextMenu>
           </div>
           <div className="flex justify-center items-center w-full">
             <p>{formatTime(currentTime ?? 0)}</p>
