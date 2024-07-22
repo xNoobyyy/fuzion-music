@@ -7,8 +7,25 @@ import {
 } from "~/components/ui/resizable"
 import { Main } from "~/components/misc/main/main"
 import { Playing } from "~/components/misc/playing/playing"
+import { useEffect } from "react"
 
-function App() {
+const App = () => {
+  useEffect(() => {
+    document.addEventListener("keydown", function (event) {
+      if (
+        event.key === "F5" ||
+        (event.ctrlKey && event.key === "r") ||
+        (event.metaKey && event.key === "r")
+      ) {
+        event.preventDefault()
+      }
+    })
+
+    document.addEventListener("contextmenu", function (event) {
+      event.preventDefault()
+    })
+  }, [])
+
   return (
     <div className="h-dvh w-dvw flex flex-col">
       <ResizablePanelGroup direction="horizontal">

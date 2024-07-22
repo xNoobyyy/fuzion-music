@@ -43,20 +43,6 @@ export const Playing: FC = () => {
   const songsQuery = useSongs()
 
   useEffect(() => {
-    if (!audio.current) return
-
-    audio.current.addEventListener("ended", handleEnded)
-    audio.current.addEventListener("timeupdate", handleTimeUpdate)
-
-    return () => {
-      if (!audio.current) return
-
-      audio.current.removeEventListener("ended", handleEnded)
-      audio.current.removeEventListener("timeupdate", handleTimeUpdate)
-    }
-  }, [audio.current])
-
-  useEffect(() => {
     if (!playing) return
 
     const updateConfig = async () => {
@@ -240,7 +226,7 @@ export const Playing: FC = () => {
 
   return (
     <>
-      <audio ref={audio} />
+      <audio onEnded={handleEnded} onTimeUpdate={handleTimeUpdate} ref={audio} />
       <div className="size-full grid grid-cols-[1fr,2fr,1fr]">
         <div className="size-full relative flex items-center">
           <Gradient url={tauri.convertFileSrc(playing.thumbnail)} />
