@@ -4,8 +4,6 @@
 
 ### Spotify-like musicplayer for downloaded youtube videos
 
----
-
 Build using:
 
 - Tauri (with rusty_ytdl)
